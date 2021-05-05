@@ -2,6 +2,11 @@
 
 Hans Brouwer & Aggariyo Wanagiri
 
+```bash
+pip install pillow numpy
+python guided_filter.py stained-glass-dark.png stained-glass-light.png
+```
+
 ## [Image fusion with guided filtering](https://www.researchgate.net/profile/Shutao-Li-2/publication/235392779_Image_Fusion_With_Guided_Filtering/links/563720f808aeb786b7042cd2/Image-Fusion-With-Guided-Filtering.pdf)
 
 - Guided filter
