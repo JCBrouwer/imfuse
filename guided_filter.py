@@ -52,6 +52,7 @@ def convolve(image, kernel):
 
     output = np.zeros((b, h, w, c))
 
+    # TODO get rid of these for loops
     for y in range(h):
         for x in range(w):
             output[:, y, x] = np.sum(kernel * image[:, y : y + kh, x : x + kw], axis=(1, 2))
@@ -71,6 +72,7 @@ def guided_filter(image, guide, radius, eps):
     guide = pad(guide, radius)
     output = pad(np.zeros((h, w)), radius)
 
+    # TODO get rid of these for loops
     for y in range(h):
         for x in range(w):
             I = guide[y : y + ks, x : x + ks]
@@ -97,8 +99,8 @@ def info(x):
 def fuse_images(images: List[np.ndarray], guide_radius, guide_epsilon, average_radius, gaussian_radius, gaussian_sigma):
     images = np.stack(images)
     if not (images.min() == 0 and images.max() == 1):
-        images -= images.min()
-        images /= images.max()
+        images = images - images.min()
+        images = images / images.max()
 
     print("average filter")
     t = time()
@@ -152,7 +154,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("images", nargs="+", type=str)
     parser.add_argument("-r", "--guide_radius", type=int, default=7)
-    parser.add_argument("-e", "--guide_epsilon", type=float, default=3.0)
+    parser.add_argument("-e", "--guide_epsilon", type=float, default=0.05)
     parser.add_argument("-ar", "--average_radius", type=int, default=31)
     parser.add_argument("-gr", "--gaussian_radius", type=int, default=5)
     parser.add_argument("-gs", "--gaussian_sigma", type=float, default=5.0)
