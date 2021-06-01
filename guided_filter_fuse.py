@@ -55,7 +55,14 @@ def guided_filter(image, guide, radius, eps):
     return output
 
 
-def fuse_images(images: List[np.ndarray], guide_radius, guide_epsilon, average_radius, gaussian_radius, gaussian_sigma):
+def fuse_images(
+    images: List[np.ndarray],
+    guide_radius=7,
+    guide_epsilon=0.05,
+    average_radius=31,
+    gaussian_radius=5,
+    gaussian_sigma=5.0,
+):
     images = np.stack(images)
     if not (images.min() == 0 and images.max() == 1):
         images = images - images.min()
