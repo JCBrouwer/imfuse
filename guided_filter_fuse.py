@@ -8,27 +8,9 @@ import scipy.ndimage
 import scipy.signal
 from PIL import Image
 
-from util import average_kernel, gaussian_kernel, info, laplacian_kernel, pad
+from util import average_kernel, box_filter, gaussian_kernel, laplacian_kernel
 
 convolve = partial(scipy.signal.fftconvolve, mode="same")
-
-
-def diff_x(x, r):
-    left = x[r : 2 * r + 1]
-    middle = x[2 * r + 1 :] - x[: -2 * r - 1]
-    right = x[-1:] - x[-2 * r - 1 : -r - 1]
-    return np.concatenate([left, middle, right], axis=0)
-
-
-def diff_y(x, r):
-    left = x[:, r : 2 * r + 1]
-    middle = x[:, 2 * r + 1 :] - x[:, : -2 * r - 1]
-    right = x[:, -1:] - x[:, -2 * r - 1 : -r - 1]
-    return np.concatenate([left, middle, right], axis=1)
-
-
-def box_filter(x, r):
-    return diff_y(diff_x(x.cumsum(axis=0), r).cumsum(axis=1), r)
 
 
 def guided_filter(image, guide, radius, eps):

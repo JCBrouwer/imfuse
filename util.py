@@ -1,4 +1,23 @@
 import numpy as np
+from skimage.transform import resize
+
+
+def diff_x(x, r):
+    left = x[r : 2 * r + 1]
+    middle = x[2 * r + 1 :] - x[: -2 * r - 1]
+    right = x[-1:] - x[-2 * r - 1 : -r - 1]
+    return np.concatenate([left, middle, right], axis=0)
+
+
+def diff_y(x, r):
+    left = x[:, r : 2 * r + 1]
+    middle = x[:, 2 * r + 1 :] - x[:, : -2 * r - 1]
+    right = x[:, -1:] - x[:, -2 * r - 1 : -r - 1]
+    return np.concatenate([left, middle, right], axis=1)
+
+
+def box_filter(x, r):
+    return diff_y(diff_x(x.cumsum(axis=0), r).cumsum(axis=1), r)
 
 
 def average_kernel(r):
@@ -96,3 +115,49 @@ def slow_guided_filter(image, guide, radius, eps):
             output[y : y + ks, x : x + ks] += (I @ a + b) / ka
 
     return output[radius:-radius, radius:-radius][..., np.newaxis]
+
+
+def pad2(image, padding):
+    padding = int(padding)
+    if image.ndim == 2:
+        w, h = image.shape
+        result = resize(image.T, (h + padding * 2, w + padding * 2)).T
+        result[padding:-padding, padding:-padding] = image
+    if image.ndim == 3:
+        c, w, h = image.shape
+        result = resize(image.T, (h + padding * 2, w + padding * 2)).T
+        result[:, padding:-padding, padding:-padding] = image
+    return result
+
+
+def slow_decision_map(img1, img2, ks, reduce=np.max):
+    ks = int(ks)
+    p = int((ks - 1) / 2)
+    img1_p = pad2(img1, padding=p)
+    img2_p = pad2(img2, padding=p)
+
+    output = np.zeros(img1.shape)
+
+    _, w, h = img1.shape
+    for i in range(w):
+        for j in range(h):
+            w1 = reduce(np.abs(img1_p[:, i : i + ks - 1, j : j + ks - 1]), axis=(1, 2))
+            w2 = reduce(np.abs(img2_p[:, i : i + ks - 1, j : j + ks - 1]), axis=(1, 2))
+            output[:, i, j] = w1 > w2
+
+    return output
+
+
+def slow_majority_filter(map, ks):
+    ks = int(ks)
+    map_p = pad2(map, padding=int((ks - 1) / 2))
+
+    output = np.zeros(map.shape)
+
+    c, w, h = map.shape
+    for i in range(w):
+        for j in range(h):
+            w1 = map_p[:, i : i + ks - 1, j : j + ks - 1]
+            output[:, i, j] = w1.sum((1, 2)) > ks ** 2 / 2
+
+    return output
