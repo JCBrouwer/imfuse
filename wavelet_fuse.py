@@ -4,20 +4,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pywt
 from PIL import Image
-from scipy.ndimage import maximum_filter1d, median_filter
+from scipy.ndimage import maximum_filter1d
 from skimage.transform import resize
 
 from util import box_filter
 
 
 def decision_map(img1, img2, ks):
-    max1 = maximum_filter1d(maximum_filter1d(img1, axis=1, size=ks, mode="mirror"), axis=1, size=ks, mode="mirror")
-    max2 = maximum_filter1d(maximum_filter1d(img2, axis=1, size=ks, mode="mirror"), axis=1, size=ks, mode="mirror")
+    max1 = maximum_filter1d(maximum_filter1d(img1, axis=1, size=ks, mode="mirror"), axis=2, size=ks, mode="mirror")
+    max2 = maximum_filter1d(maximum_filter1d(img2, axis=1, size=ks, mode="mirror"), axis=2, size=ks, mode="mirror")
     return max1 > max2
 
 
 def majority_filter(map, ks):
-    return box_filter(map, int((ks - 1) / 2)) > (ks ** 2) / 2
+    return box_filter(map.T, int((ks - 1) / 2)).T > (ks ** 2) / 2
 
 
 def fuse(img1, img2, ks=5):
@@ -177,11 +177,12 @@ if __name__ == "__main__":
 
     images = []
     for img_file in args.images:
-        images.append(np.asfarray(Image.open(img_file)))
+        img = np.asfarray(Image.open(img_file))
+        if len(img.shape) < 3:
+            img = img[..., None]
+        images.append(img)
 
     fused = fuse_images(*images, kernel_size=args.kernel_size, wavelet=args.wavelet)
-
-    print(fused.min(), fused.mean(), fused.max())
 
     import matplotlib.pyplot as plt
 
