@@ -1,1 +1,0 @@
-From https://github.com/h4nwei/MEF-SSIMd (http://sim.jxufe.cn/JDMKL/code/DeghostingIQADatabase.rar)

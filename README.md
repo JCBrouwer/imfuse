@@ -4,7 +4,9 @@ Hans Brouwer & Aggariyo Wanagiri
 
 ```bash
 pip install -r requirements.txt
-python guided_filter_fuse.py stained-glass-dark.png stained-glass-light.png
+python guided_filter_fuse.py -h
+python wavelet_fuse.py -h
+python evaluation.py
 ```
 
 ## [Image fusion with guided filtering](https://www.researchgate.net/profile/Shutao-Li-2/publication/235392779_Image_Fusion_With_Guided_Filtering/links/563720f808aeb786b7042cd2/Image-Fusion-With-Guided-Filtering.pdf)
@@ -46,13 +48,8 @@ python guided_filter_fuse.py stained-glass-dark.png stained-glass-light.png
 
 - Image fusion
   1. Calculate wavelet transform
-  2. At each resolution and point in the image take the max of coefficients
-     - Naively taking pixel-by-pixel max doesn't necessarily preserve most relevant info
-     - Instead:
-       1. Decompose image into gradient pyramid
-       2. Calculate variance in image over 3x3 and 5x5 windows
-       3. If variance acitivities are close: average, else: take max of two
-       4. Binarize over images based on max activity value
+  2. At each resolution and point in the image take the max of coefficients of the two images
+     - Windowed maximum over local area of coefficients
   3. Majority filter on binary weighting
      - Majority filter, negate, majority filter, negate
-  4. Apply binary map to wavelets and transform back to image 
+  4. Apply binary map to wavelets and transform back to image

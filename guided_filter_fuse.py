@@ -3,10 +3,11 @@ from functools import partial
 from time import time
 from typing import List
 
+import imageio
 import numpy as np
 import scipy.ndimage
 import scipy.signal
-from PIL import Image
+from skimage.transform import resize
 
 from util import average_kernel, box_filter, gaussian_kernel, laplacian_kernel
 
@@ -45,10 +46,14 @@ def fuse_images(
     gaussian_radius=5,
     gaussian_sigma=5.0,
 ):
+    max_shape = max([im.shape for im in images])
+    images = [resize(im, max_shape) for im in images]
     images = np.stack(images)
     if not (images.min() == 0 and images.max() == 1):
         images = images - images.min()
         images = images / images.max()
+    if len(images.shape) < 4:
+        images = images[..., None]
 
     images_base = convolve(images, average_kernel(average_radius))
     images_detail = images - images_base
@@ -85,16 +90,14 @@ if __name__ == "__main__":
     parser.add_argument("-gs", "--gaussian_sigma", type=float, default=5.0)
     args = parser.parse_args()
 
-    images = []
-    for img_file in args.images:
-        images.append(Image.open(img_file))
-
+    images = [imageio.imread(img_file) for img_file in args.images]
     fused = fuse_images(
         images, args.guide_radius, args.guide_epsilon, args.average_radius, args.gaussian_radius, args.gaussian_sigma
     )
 
     import matplotlib.pyplot as plt
 
-    plt.imshow(fused)
+    plt.imshow(fused.squeeze())
+    plt.axis("off")
+    plt.tight_layout()
     plt.show()
-
