@@ -1,4 +1,4 @@
-# Image fusion using wavelet transform
+# Image fusion
 
 Hans Brouwer & Aggariyo Wanagiri
 
