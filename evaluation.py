@@ -48,24 +48,24 @@ def yang_Q_y(ref_A, ref_B, fused, ks=7, figname=None):
     Q_y[use_max] = np.maximum(ssim_A[use_max], ssim_B[use_max])
 
     if figname is not None:
-        _, ax = plt.subplots(3, 3, figsize=(15, 15))
+        _, ax = plt.subplots(1, 3, figsize=(15, 5))
         [axi.set_axis_off() for axi in ax.ravel()]
-        ax[0, 0].imshow(ref_A.squeeze())
-        ax[0, 0].set_title("A")
-        ax[0, 1].imshow(ref_B.squeeze())
-        ax[0, 1].set_title("B")
-        ax[0, 2].imshow(fused.squeeze())
-        ax[0, 2].set_title("Fused")
-        ax[1, 0].imshow(ssim_A.squeeze() / 2 + 0.4999)
-        ax[1, 0].set_title(r"$SSIM_A$")
-        ax[1, 1].imshow(ssim_B.squeeze() / 2 + 0.4999)
-        ax[1, 1].set_title(r"$SSIM_B$")
-        ax[1, 2].imshow(np.nan_to_num(Q_y, nan=1).squeeze() / 2 + 0.4999)
-        ax[1, 2].set_title(r"$Q_y$")
-        ax[2, 0].imshow(normalize(var_A).squeeze())
-        ax[2, 0].set_title(r"$\sigma^2_B$")
-        ax[2, 1].imshow(normalize(var_B).squeeze())
-        ax[2, 1].set_title(r"$\sigma^2_B$")
+        # ax[0, 0].imshow(ref_A.squeeze())
+        # ax[0, 0].set_title("A")
+        # ax[0, 1].imshow(ref_B.squeeze())
+        # ax[0, 1].set_title("B")
+        # ax[0, 2].imshow(fused.squeeze())
+        # ax[0, 2].set_title("Fused")
+        ax[0].imshow(ssim_A.squeeze() / 2 + 0.4999)
+        ax[0].set_title(r"$SSIM_A$")
+        ax[1].imshow(ssim_B.squeeze() / 2 + 0.4999)
+        ax[1].set_title(r"$SSIM_B$")
+        ax[2].imshow(np.nan_to_num(Q_y, nan=1).squeeze() / 2 + 0.4999)
+        ax[2].set_title(r"$Q_y$")
+        # ax[2, 0].imshow(normalize(var_A).squeeze())
+        # ax[2, 0].set_title(r"$\sigma^2_B$")
+        # ax[2, 1].imshow(normalize(var_B).squeeze())
+        # ax[2, 1].set_title(r"$\sigma^2_B$")
         plt.tight_layout()
         plt.savefig("results/SSIM_" + figname + ".jpg")
         plt.close()
@@ -114,6 +114,7 @@ def ssim(inputs, fused):
 
 
 if __name__ == "__main__":
+    # if False:
     pairs = []
 
     pairs.append(glob("data/stained-glass*.jpg"))
@@ -135,6 +136,21 @@ if __name__ == "__main__":
         print("Q_c", cvejic_Q_c(glass_A, glass_B, glass_fused))
         print("Q_y", yang_Q_y(glass_A, glass_B, glass_fused, figname=f"stained_glass_{name}"))
 
+    fusedw = np.asfarray(imageio.imread("results/stained_glass_wfusimg_level2.jpg")) / 255
+    _, ax = plt.subplots(1, 3, figsize=(15, 5))
+    [axi.set_axis_off() for axi in ax.ravel()]
+    ax[0].imshow(glass_A)
+    ax[1].imshow(glass_B)
+    ax[2].imshow(resize(fusedw, (*fusedw.shape[:2], 3)))
+    plt.tight_layout()
+    plt.savefig(f"results/stained_glass_wfuseimg.jpg")
+    plt.close()
+
+    print("\nwfusimg")
+    print("NMI", nmi([glass_A, glass_B], fusedw))
+    print("Q_c", cvejic_Q_c(glass_A, glass_B, fusedw))
+    print("Q_y", yang_Q_y(glass_A, glass_B, fusedw, figname=f"stained_glass_wfuseimg"))
+
     pairs.append(glob("data/clock*.jpg"))
     clock_A, clock_B = [np.asfarray(imageio.imread(file)) / 255 for file in glob("data/clock*.jpg")]
     for name, fuse in ("guided", guided_filter_fuse), ("wavelet", wavelet_fuse):
@@ -153,6 +169,21 @@ if __name__ == "__main__":
         print("NMI", nmi([clock_A, clock_B], clock_fused))
         print("Q_c", cvejic_Q_c(clock_A, clock_B, clock_fused))
         print("Q_y", yang_Q_y(clock_A, clock_B, clock_fused, figname=f"clock_{name}"))
+
+    fusedw = np.asfarray(imageio.imread("results/clock_wfusimg_raw.jpg")) / 255
+    _, ax = plt.subplots(1, 3, figsize=(15, 5))
+    [axi.set_axis_off() for axi in ax.ravel()]
+    ax[0].imshow(clock_A)
+    ax[1].imshow(clock_B)
+    ax[2].imshow(resize(fusedw, (*fusedw.shape[:2], 3)))
+    plt.tight_layout()
+    plt.savefig(f"results/clock_wfusimg.jpg")
+    plt.close()
+
+    print("\nwfusimg")
+    print("NMI", nmi([clock_A, clock_B], fusedw))
+    print("Q_c", cvejic_Q_c(clock_A, clock_B, fusedw))
+    print("Q_y", yang_Q_y(clock_A, clock_B, fusedw, figname=f"clock_wfusimg"))
 
     for dir in glob("data/brains/*"):
         if "README" in dir:
@@ -177,8 +208,28 @@ if __name__ == "__main__":
             print("Q_c", cvejic_Q_c(brain_A, brain_B, brain_fused))
             print(
                 "Q_y",
-                yang_Q_y(brain_A, brain_B, brain_fused, figname=f"{dir.replace('data/','').replace('/','_')}_{name}",),
+                yang_Q_y(brain_A, brain_B, brain_fused, figname=f"{dir.replace('data/','').replace('/','_')}_{name}"),
             )
+
+        fusedw = (
+            np.asfarray(
+                imageio.imread(f"results/{dir.replace('data/','').replace('/','_')}_wfusimg_raw.jpg")[..., None]
+            )
+            / 255
+        )
+        _, ax = plt.subplots(1, 3, figsize=(15, 5))
+        [axi.set_axis_off() for axi in ax.ravel()]
+        ax[0].imshow(resize(brain_A, (*fusedw.shape[:2], 3)))
+        ax[1].imshow(brain_B)
+        ax[2].imshow(resize(fusedw, (*fusedw.shape[:2], 3)))
+        plt.tight_layout()
+        plt.savefig(f"results/{dir.replace('data/','').replace('/','_')}_wfusimg.jpg")
+        plt.close()
+
+        print("\nwfusimg")
+        print("NMI", nmi([brain_A, brain_B], fusedw))
+        print("Q_c", cvejic_Q_c(brain_A, brain_B, fusedw))
+        print("Q_y", yang_Q_y(brain_A, brain_B, fusedw, figname=f"{dir.replace('data/','').replace('/','_')}_wfusimg"))
 
     horse_images = [np.asfarray(imageio.imread(file)) / 255 for file in glob("data/horse/*.jpg")]
     horse_fused = guided_filter_fuse(horse_images)
@@ -196,38 +247,64 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("results/horse_guided_filter.jpg")
 
-    print("\n\n\nWAVELET KERNEL SIZE SHOWDOWN!")
-
     pairs = [[np.asfarray(imageio.imread(file)) / 255 for file in pair] for pair in pairs]
 
-    scores = []
-    for wavelet, kernel_size in tqdm(list(itertools.product(WAVELET_CHOICES, range(3, 41, 2)))):
-        NMIs = []
-        Q_cs = []
-        Q_ys = []
-        try:
-            for A, B in pairs:
-                if len(A.shape) == 2:
-                    A = A[..., None]
-                F = wavelet_fuse([A, B], kernel_size=int(kernel_size), wavelet=wavelet)
+    if False:
+        print("\n\n\nWAVELET KERNEL SIZE SHOWDOWN!")
+        print("wavelet,size,NMI,Qc,Qy")
 
-                NMIs.append(nmi([A, B], F))
-                Q_cs.append(cvejic_Q_c(A, B, F))
-                Q_ys.append(yang_Q_y(A, B, F, figname=None))
+        for wavelet, kernel_size in tqdm(list(itertools.product(WAVELET_CHOICES, range(3, 41, 2)))):
+            NMIs = []
+            Q_cs = []
+            Q_ys = []
+            try:
+                for A, B in pairs:
+                    if len(A.shape) == 2:
+                        A = A[..., None]
+                    F = wavelet_fuse([A, B], kernel_size=int(kernel_size), wavelet=wavelet)
 
-            print(f"\n{wavelet}", kernel_size)
-            print("NMI", np.mean(NMIs))
-            print("Q_c", np.mean(Q_cs))
-            print("Q_y", np.mean(Q_ys))
-            scores.append([(wavelet, kernel_size), [np.mean(NMIs), np.mean(Q_cs), np.mean(Q_ys)]])
-        except:
-            print(f"\n{wavelet}", kernel_size, "FAILED")
-            scores.append([(wavelet, kernel_size), [-1, -1, -1]])
+                    NMIs.append(nmi([A, B], F))
+                    Q_cs.append(cvejic_Q_c(A, B, F))
+                    Q_ys.append(yang_Q_y(A, B, F, figname=None))
 
-    print("\n\n\nTop 10 wavelet + kernel size settings:")
-    for (wavelet, kernel_size), (mnmi, qc, qy) in list(sorted(scores, key=lambda x: x[1], reverse=True))[:10]:
-        print(wavelet, kernel_size)
-        print("NMI", mnmi)
-        print("Q_c", qc)
-        print("Q_y", qy)
-        print()
+                print(f"{wavelet},{kernel_size},{np.mean(NMIs)},{np.mean(Q_cs)},{np.mean(Q_ys)}")
+            except:
+                pass
+
+    # if False:
+    import pandas as pd
+
+    data = pd.read_csv("results/wavelet-comparison.csv")
+    data["Sum"] = data.NMI + data.Qy + data.Qc
+    data["NormSum"] = (
+        ((data.NMI - data.NMI.min()) / (data.NMI.max() - data.NMI.min()))
+        + ((data.Qy - data.Qy.min()) / (data.Qy.max() - data.Qy.min()))
+        + ((data.Qc - data.Qc.min()) / (data.Qc.max() - data.Qc.min()))
+    )
+
+    sort_by = ["NMI", "Qy", "Qc", "Sum", "NormSum"]
+    best = pd.concat([data.sort_values(by=by, ascending=False)[:5] for by in sort_by])
+
+    for j, (A, B) in enumerate(pairs):
+        if len(A.shape) == 2:
+            A = A[..., None]
+        fig, ax = plt.subplots(5, 5, figsize=(20, 20))
+        for i, (_, row) in enumerate(best.iterrows()):
+            axi = ax[i // 5, i % 5]
+            if i % 5 == 0:
+                axi.set_ylabel(sort_by[i // 5], fontsize=40)
+            axi.imshow(wavelet_fuse([A, B], kernel_size=row["size"], wavelet=row["wavelet"]))
+            axi.set_title(row["wavelet"] + ", " + str(row["size"]), y=-0.01, color="white")
+            axi.tick_params(
+                axis="both",
+                which="both",
+                left=False,
+                right=False,
+                bottom=False,
+                top=False,
+                labelleft=False,
+                labelbottom=False,
+            )
+        plt.tight_layout()
+        plt.savefig(f"results/wavelet-comparison{j}.pdf")
+

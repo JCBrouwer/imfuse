@@ -67,8 +67,9 @@ def fuse(img1, img2, ks=5):
     return img1 + img2
 
 
-@timeout(error_message="Wavelet fusion timed out. You should try a different wavelet and kernel size")
-def fuse_images(images, kernel_size=3, wavelet="db2"):
+@timeout(error_message="Wavelet fusion timed out. You probably need a larger kernel size for this wavelet")
+def fuse_images(images, kernel_size=3, wavelet="db2", max_depth=999):
+    # ensure images have the right shape for the following operations
     for i in range(2):
         if len(images[i].shape) < 3:
             images[i] = images[i][..., None]
@@ -78,20 +79,28 @@ def fuse_images(images, kernel_size=3, wavelet="db2"):
             images[i] = images[i] / images[i].max()
     x, y = images
 
+    # move down the wavelet pyramid, fuse along the way
+    depth = 1
     stack = []
     while x.shape[-2:] >= (2 * kernel_size, 2 * kernel_size):
+        if depth > max_depth:
+            break
         x, (hx, vx, dx) = pywt.dwt2(x, wavelet)
         y, (hy, vy, dy) = pywt.dwt2(y, wavelet)
         stack.append(fuse(dx, dy, ks=kernel_size))
         stack.append(fuse(vx, vy, ks=kernel_size))
         stack.append(fuse(hx, hy, ks=kernel_size))
+        depth += 1
 
+    # fuse the DC offset
     fused = fuse(x, y, kernel_size)
 
+    # inverse wavelet transform back up
     while len(stack) > 0:
         fused = resize(fused, stack[-1].shape)
         fused = pywt.idwt2((fused, (stack.pop(-1), stack.pop(-1), stack.pop(-1))), wavelet)
 
+    # clip to image range and resize to original shape
     fused = np.clip(fused, 0, 1)
     fused = resize(fused, (fused.shape[0], *images[0].shape[-2:]))
     return fused.T
@@ -100,8 +109,10 @@ def fuse_images(images, kernel_size=3, wavelet="db2"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("images", nargs=2, type=str)
-    parser.add_argument("-ks", "--kernel_size", type=int, default=3)
     parser.add_argument("-w", "--wavelet", type=str, default="db2", choices=WAVELET_CHOICES)
+    parser.add_argument("-ks", "--kernel_size", type=int, default=3)
+    parser.add_argument("-d", "--max_depth", type=int, default=999)
+    parser.add_argument("-s", "--simple", action="store_true")
     args = parser.parse_args()
 
     images = []
