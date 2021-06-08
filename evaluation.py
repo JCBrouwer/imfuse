@@ -271,40 +271,40 @@ if __name__ == "__main__":
             except:
                 pass
 
-    # if False:
-    import pandas as pd
+    if False:
+        import pandas as pd
 
-    data = pd.read_csv("results/wavelet-comparison.csv")
-    data["Sum"] = data.NMI + data.Qy + data.Qc
-    data["NormSum"] = (
-        ((data.NMI - data.NMI.min()) / (data.NMI.max() - data.NMI.min()))
-        + ((data.Qy - data.Qy.min()) / (data.Qy.max() - data.Qy.min()))
-        + ((data.Qc - data.Qc.min()) / (data.Qc.max() - data.Qc.min()))
-    )
+        data = pd.read_csv("results/wavelet-comparison.csv")
+        data["Sum"] = data.NMI + data.Qy + data.Qc
+        data["NormSum"] = (
+            ((data.NMI - data.NMI.min()) / (data.NMI.max() - data.NMI.min()))
+            + ((data.Qy - data.Qy.min()) / (data.Qy.max() - data.Qy.min()))
+            + ((data.Qc - data.Qc.min()) / (data.Qc.max() - data.Qc.min()))
+        )
 
-    sort_by = ["NMI", "Qy", "Qc", "Sum", "NormSum"]
-    best = pd.concat([data.sort_values(by=by, ascending=False)[:5] for by in sort_by])
+        sort_by = ["NMI", "Qy", "Qc", "Sum", "NormSum"]
+        best = pd.concat([data.sort_values(by=by, ascending=False)[:5] for by in sort_by])
 
-    for j, (A, B) in enumerate(pairs):
-        if len(A.shape) == 2:
-            A = A[..., None]
-        fig, ax = plt.subplots(5, 5, figsize=(20, 20))
-        for i, (_, row) in enumerate(best.iterrows()):
-            axi = ax[i // 5, i % 5]
-            if i % 5 == 0:
-                axi.set_ylabel(sort_by[i // 5], fontsize=40)
-            axi.imshow(wavelet_fuse([A, B], kernel_size=row["size"], wavelet=row["wavelet"]))
-            axi.set_title(row["wavelet"] + ", " + str(row["size"]), y=-0.01, color="white")
-            axi.tick_params(
-                axis="both",
-                which="both",
-                left=False,
-                right=False,
-                bottom=False,
-                top=False,
-                labelleft=False,
-                labelbottom=False,
-            )
-        plt.tight_layout()
-        plt.savefig(f"results/wavelet-comparison{j}.pdf")
+        for j, (A, B) in enumerate(pairs):
+            if len(A.shape) == 2:
+                A = A[..., None]
+            fig, ax = plt.subplots(5, 5, figsize=(20, 20))
+            for i, (_, row) in enumerate(best.iterrows()):
+                axi = ax[i // 5, i % 5]
+                if i % 5 == 0:
+                    axi.set_ylabel(sort_by[i // 5], fontsize=40)
+                axi.imshow(wavelet_fuse([A, B], kernel_size=row["size"], wavelet=row["wavelet"]))
+                axi.set_title(row["wavelet"] + ", " + str(row["size"]), y=-0.01, color="white")
+                axi.tick_params(
+                    axis="both",
+                    which="both",
+                    left=False,
+                    right=False,
+                    bottom=False,
+                    top=False,
+                    labelleft=False,
+                    labelbottom=False,
+                )
+            plt.tight_layout()
+            plt.savefig(f"results/wavelet-comparison{j}.pdf")
 

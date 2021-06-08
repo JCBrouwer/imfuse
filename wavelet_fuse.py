@@ -49,13 +49,16 @@ WAVELET_CHOICES = [
 
 
 def decision_map(img1, img2, ks):
+    # maximum filter is separable so we perform two 1D filters in sequence
     max1 = maximum_filter1d(maximum_filter1d(img1, axis=1, size=ks, mode="mirror"), axis=2, size=ks, mode="mirror")
     max2 = maximum_filter1d(maximum_filter1d(img2, axis=1, size=ks, mode="mirror"), axis=2, size=ks, mode="mirror")
     return max1 > max2
 
 
 def majority_filter(map, ks):
-    return box_filter(map.T, int((ks - 1) / 2)).T > (ks ** 2) / 2
+    # because the the map is binary, comparing the sum with the area of the kernel is equivalent to majority vote
+    radius = int((ks - 1) / 2)
+    return box_filter(map.T, radius).T > (ks ** 2) / 2
 
 
 def fuse(img1, img2, ks=5):
@@ -68,7 +71,7 @@ def fuse(img1, img2, ks=5):
 
 
 @timeout(error_message="Wavelet fusion timed out. You probably need a larger kernel size for this wavelet")
-def fuse_images(images, kernel_size=3, wavelet="db2", max_depth=999):
+def fuse_images(images, kernel_size=37, wavelet="sym13", max_depth=999):
     # ensure images have the right shape for the following operations
     for i in range(2):
         if len(images[i].shape) < 3:
