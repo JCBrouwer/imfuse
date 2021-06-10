@@ -9,7 +9,7 @@ import scipy.ndimage
 import scipy.signal
 from skimage.transform import resize
 
-from util import average_kernel, box_filter, gaussian_kernel, laplacian_kernel
+from util import average_kernel, box_filter, gaussian_kernel, laplacian_kernel, slow_guided_filter, slow_convolve
 
 convolve = partial(scipy.signal.fftconvolve, mode="same")
 
@@ -45,6 +45,7 @@ def fuse_images(
     average_radius=31,
     gaussian_radius=5,
     gaussian_sigma=5.0,
+    slow=False,
 ):
     max_shape = max([im.shape for im in images])
     images = [resize(im, max_shape) for im in images]
@@ -55,20 +56,30 @@ def fuse_images(
     if len(images.shape) < 4:
         images = images[..., None]
 
-    images_base = convolve(images, average_kernel(average_radius))
+    images_base = (slow_convolve if slow else convolve)(images, average_kernel(average_radius))
     images_detail = images - images_base
 
-    images_highpass = convolve(images, laplacian_kernel())
+    images_highpass = (slow_convolve if slow else convolve)(images, laplacian_kernel())
 
-    saliency = convolve(np.abs(images_highpass), gaussian_kernel(gaussian_radius, gaussian_sigma))
+    saliency = (slow_convolve if slow else convolve)(
+        np.abs(images_highpass), gaussian_kernel(gaussian_radius, gaussian_sigma)
+    )
     saliency = np.sum(saliency, axis=-1)
 
     weight_map = np.argmax(saliency, axis=0)
 
     base_map, detail_map = [], []
     for i in range(len(images)):
-        base_map.append(guided_filter(weight_map == i, images_base[i], radius=guide_radius, eps=guide_epsilon))
-        detail_map.append(guided_filter(weight_map == i, images_detail[i], radius=guide_radius, eps=guide_epsilon))
+        base_map.append(
+            (slow_guided_filter if slow else guided_filter)(
+                weight_map == i, images_base[i], radius=guide_radius, eps=guide_epsilon
+            )
+        )
+        detail_map.append(
+            (slow_guided_filter if slow else guided_filter)(
+                weight_map == i, images_detail[i], radius=guide_radius, eps=guide_epsilon
+            )
+        )
     base_map, detail_map = np.stack(base_map), np.stack(detail_map)
     base_map /= base_map.sum(0)
     detail_map /= detail_map.sum(0)

@@ -1,0 +1,24 @@
+
+\begin{table}[!h]
+    \centering
+    \caption{The scores of the three methods on each test pair}
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        Method                  & Metric    & Test pair \textbf{a} & Test pair \textbf{b} & Test pair \textbf{c} \\
+        \hline
+        \hline
+        \texttt{wavelet}        & $Q_{NMI}$ & 1.155                & 1.247                & 1.094                \\
+                                & $Q_c$     & 0.374                & 0.677                & 0.275                \\
+                                & $Q_y$     & 0.763                & 0.887                & 0.878                \\
+        \hline
+        \texttt{guided\_filter} & $Q_{NMI}$ & 1.269                & 1.420                & 1.085                \\
+                                & $Q_c$     & 0.558                & 0.809                & 0.418                \\
+                                & $Q_y$     & 0.938                & 0.983                & 0.926                \\
+        \hline
+        \texttt{wfusimg}        & $Q_{NMI}$ & 1.220                & 1.313                & 1.241                \\
+                                & $Q_c$     & 0.473                & 0.801                & 0.291                \\
+                                & $Q_y$     & 0.798                & 0.957                & 0.955                \\
+        \hline
+    \end{tabular}
+    \label{tab:my_label}
+\end{table}

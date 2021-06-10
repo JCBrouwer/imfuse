@@ -2,6 +2,20 @@
 
 close all
 
+sizes = [128, 256, 512, 724, 1024, 1448, 2048];
+for l = 1:7
+    A = rand(sizes(l), sizes(l), 3);
+    B = rand(sizes(l), sizes(l), 3);
+    times = zeros(100,1);
+    for i = 1:100
+        tic
+        wfusimg(A, B, 'haar', l, 'mean', 'max');
+        times(i) = toc;
+    end
+    strcat(int2str(sizes(l)),",wfusimg,", int2str(mean(times,'all')*1000),",", int2str(std(times,0,'all')*1000))
+end
+return
+
 A = readim('data/stained-glass-dark.jpg');
 B = readim('data/stained-glass-light.jpg');
 

@@ -7,45 +7,9 @@ import pywt
 from scipy.ndimage import maximum_filter1d
 from skimage.transform import resize
 
-from util import box_filter, timeout
+from util import box_filter, slow_decision_map, slow_majority_filter, timeout
 
-WAVELET_CHOICES = [
-    "bior1.1",
-    "bior1.3",
-    "bior1.5",
-    "bior2.2",
-    "bior2.4",
-    "bior2.6",
-    "bior2.8",
-    "bior3.1",
-    "bior3.3",
-    "bior3.5",
-    "bior3.7",
-    "bior3.9",
-    "bior4.4",
-    "bior5.5",
-    "bior6.8",
-    *[f"coif{i}" for i in range(1, 17)],
-    *[f"db{i}" for i in range(1, 38)],
-    "dmey",
-    "haar",
-    "rbio1.1",
-    "rbio1.3",
-    "rbio1.5",
-    "rbio2.2",
-    "rbio2.4",
-    "rbio2.6",
-    "rbio2.8",
-    "rbio3.1",
-    "rbio3.3",
-    "rbio3.5",
-    "rbio3.7",
-    "rbio3.9",
-    "rbio4.4",
-    "rbio5.5",
-    "rbio6.8",
-    *[f"sym{i}" for i in range(2, 20)],
-]
+WAVELET_CHOICES = pywt.wavelist(kind="discrete")
 
 
 def decision_map(img1, img2, ks):
@@ -61,9 +25,11 @@ def majority_filter(map, ks):
     return box_filter(map.T, radius).T > (ks ** 2) / 2
 
 
-def fuse(img1, img2, ks=5):
-    binary_map = decision_map(img1, img2, ks)
-    binary_map = 1 - majority_filter(1 - majority_filter(binary_map, ks), ks)
+def fuse(img1, img2, ks=5, slow=False):
+    binary_map = (slow_decision_map if slow else decision_map)(img1, img2, ks)
+    binary_map = 1 - (slow_majority_filter if slow else majority_filter)(
+        1 - (slow_majority_filter if slow else majority_filter)(binary_map, ks), ks
+    )
     binary_map = binary_map.astype(bool)
     img1[~resize(binary_map, img1.shape)] = 0  # resize deals with mismatching number of channels
     img2[resize(binary_map, img2.shape)] = 0
@@ -71,7 +37,7 @@ def fuse(img1, img2, ks=5):
 
 
 @timeout(error_message="Wavelet fusion timed out. You probably need a larger kernel size for this wavelet")
-def fuse_images(images, kernel_size=37, wavelet="sym13", max_depth=999):
+def fuse_images(images, kernel_size=37, wavelet="sym13", max_depth=999, slow=False):
     # ensure images have the right shape for the following operations
     for i in range(2):
         if len(images[i].shape) < 3:
@@ -90,9 +56,9 @@ def fuse_images(images, kernel_size=37, wavelet="sym13", max_depth=999):
             break
         x, (hx, vx, dx) = pywt.dwt2(x, wavelet)
         y, (hy, vy, dy) = pywt.dwt2(y, wavelet)
-        stack.append(fuse(dx, dy, ks=kernel_size))
-        stack.append(fuse(vx, vy, ks=kernel_size))
-        stack.append(fuse(hx, hy, ks=kernel_size))
+        stack.append(fuse(dx, dy, ks=kernel_size, slow=slow))
+        stack.append(fuse(vx, vy, ks=kernel_size, slow=slow))
+        stack.append(fuse(hx, hy, ks=kernel_size, slow=slow))
         depth += 1
 
     # fuse the DC offset
@@ -112,8 +78,8 @@ def fuse_images(images, kernel_size=37, wavelet="sym13", max_depth=999):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("images", nargs=2, type=str)
-    parser.add_argument("-w", "--wavelet", type=str, default="db2", choices=WAVELET_CHOICES)
-    parser.add_argument("-ks", "--kernel_size", type=int, default=3)
+    parser.add_argument("-w", "--wavelet", type=str, default="sym13", choices=WAVELET_CHOICES)
+    parser.add_argument("-ks", "--kernel_size", type=int, default=37)
     parser.add_argument("-d", "--max_depth", type=int, default=999)
     parser.add_argument("-s", "--simple", action="store_true")
     args = parser.parse_args()
