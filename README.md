@@ -2,10 +2,21 @@
 
 Hans Brouwer & Aggariyo Wanagiri
 
+## Usage
+
+Install dependencies
 ```bash
 pip install -r requirements.txt
+```
+
+To fuse images using a CLI:
+```bash
 python guided_filter_fuse.py -h
 python wavelet_fuse.py -h
+```
+
+The main results from the report can be recreated by running the evaluation code.
+```bash
 python evaluation.py
 ```
 
@@ -40,7 +51,7 @@ python evaluation.py
 - Evaluation metrics
   - [Normalized mutual information](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html)
   - [Structural similarity (SSIM)](https://scikit-image.org/docs/dev/api/skimage.metrics.html#structural-similarity)
-  - Cveijic's Metric / [UIQI](https://github.com/andrewekhalel/sewar)
+  - Cveijic's Metric / UIQI
   - Gradient based index
   - Phase congruency
 
